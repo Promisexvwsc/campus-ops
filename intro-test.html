@@ -144,7 +144,11 @@
             transition-timing-function: cubic-bezier(0.34, 1.56, 0.64, 1);
         }
 
-        /* ===== 方案 B: 合拢(两字从左右滑入中央,位移按视口比例) ===== */
+        /* ===== 方案 B: 合拢(两字从左右滑入中央,带黑色描边) ===== */
+        body[data-v="slide"] .chars {
+            -webkit-text-stroke: clamp(2px, 0.35vw, 5px) #000;
+            paint-order: stroke fill;  /* 描边在下,黄色填充在上 → 黑边在字外轮廓 */
+        }
         body[data-v="slide"] .chars span.c1 {
             opacity: 0; transform: translateX(clamp(-300px, -38vw, -160px)) scale(0.85);
         }
