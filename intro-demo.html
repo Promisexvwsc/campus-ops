@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>方片开屏字体对比</title>
+    <style>
+        @font-face { font-family: "LongCang";     src: url("fonts/Long_Cang.ttf") format("truetype"); font-display: swap; }
+        @font-face { font-family: "MaShanZheng";  src: url("fonts/Ma_Shan_Zheng.ttf") format("truetype"); font-display: swap; }
+        @font-face { font-family: "ZCOOLKuaiLe";  src: url("fonts/ZCOOL_KuaiLe.ttf") format("truetype"); font-display: swap; }
+        @font-face { font-family: "LiuJianMaoCao";src: url("fonts/Liu_Jian_Mao_Cao.ttf") format("truetype"); font-display: swap; }
+        @font-face { font-family: "ZCOOLQingKe";  src: url("fonts/ZCOOL_QingKe_HuangYou.ttf") format("truetype"); font-display: swap; }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            background: radial-gradient(ellipse at center, #1a1a1a 0%, #050505 100%);
+            color: #e5e5e5;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "PingFang SC", "Microsoft YaHei", sans-serif;
+            min-height: 100vh;
+            overflow: hidden;
+        }
+        .picker {
+            position: fixed;
+            top: 0; left: 0; right: 0;
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 8px;
+            padding: 12px;
+            background: rgba(0,0,0,0.6);
+            backdrop-filter: blur(6px);
+            border-bottom: 1px solid rgba(251,191,36,0.2);
+            z-index: 10;
+        }
+        .picker button {
+            padding: 8px 14px;
+            background: transparent;
+            color: rgba(251,191,36,0.7);
+            border: 1.5px solid rgba(251,191,36,0.4);
+            border-radius: 999px;
+            font-size: 13px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.15s;
+        }
+        .picker button:hover {
+            background: rgba(251,191,36,0.1);
+            color: #fbbf24;
+            border-color: #fbbf24;
+        }
+        .picker button.active {
+            background: #fbbf24;
+            color: #1a1a1a;
+            border-color: #fbbf24;
+            font-weight: 700;
+        }
+        .stage {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            padding: 80px 20px 20px;
+            position: relative;
+        }
+        .chars {
+            display: flex;
+            gap: 36px;
+            font-size: 240px;
+            line-height: 1;
+            color: #fbbf24;
+            font-weight: 700;
+            user-select: none;
+            filter: drop-shadow(0 0 16px rgba(251,191,36,0.35));
+        }
+        .chars span {
+            display: inline-block;
+            clip-path: inset(0 100% 0 0);
+            transition: clip-path 0.85s cubic-bezier(0.65, 0.05, 0.35, 1);
+        }
+        .stage.play .chars span.c1 { transition-delay: 0.3s; clip-path: inset(0 0 0 0); }
+        .stage.play .chars span.c2 { transition-delay: 1.3s; clip-path: inset(0 0 0 0); }
+        .wordmark {
+            margin-top: 36px;
+            text-align: center;
+            opacity: 0;
+            transform: translateY(14px);
+            transition: opacity 0.55s ease-out, transform 0.55s ease-out;
+        }
+        .stage.play .wordmark { opacity: 1; transform: translateY(0); transition-delay: 2.4s; }
+        .wordmark h1 {
+            font-family: "Inter", "Helvetica Neue", Arial, sans-serif;
+            font-size: 22px;
+            font-weight: 700;
+            color: #fbbf24;
+            letter-spacing: 10px;
+            padding-left: 10px;
+        }
+        .wordmark p {
+            margin-top: 12px;
+            font-size: 12px;
+            color: rgba(251,191,36,0.6);
+            letter-spacing: 6px;
+            padding-left: 6px;
+        }
+        .meta {
+            position: fixed;
+            bottom: 14px; left: 0; right: 0;
+            text-align: center;
+            font-size: 12px;
+            color: rgba(229,229,229,0.4);
+            letter-spacing: 1px;
+        }
+        .meta b { color: #fbbf24; font-weight: 500; }
+
+        /* 5 字体绑定 */
+        body[data-font="LongCang"]      .chars { font-family: "LongCang", serif; }
+        body[data-font="MaShanZheng"]   .chars { font-family: "MaShanZheng", serif; }
+        body[data-font="ZCOOLKuaiLe"]   .chars { font-family: "ZCOOLKuaiLe", serif; }
+        body[data-font="LiuJianMaoCao"] .chars { font-family: "LiuJianMaoCao", serif; }
+        body[data-font="ZCOOLQingKe"]   .chars { font-family: "ZCOOLQingKe", serif; }
+
+        @media (max-width: 600px) {
+            .chars { font-size: 150px; gap: 22px; }
+            .wordmark h1 { font-size: 18px; letter-spacing: 7px; }
+            .picker button { padding: 6px 10px; font-size: 11px; }
+        }
+    </style>
+</head>
+<body data-font="MaShanZheng">
+    <div class="picker">
+        <button data-font="LongCang">Long Cang 龙藏</button>
+        <button data-font="MaShanZheng" class="active">Ma Shan Zheng 马善政</button>
+        <button data-font="ZCOOLKuaiLe">ZCOOL KuaiLe 快乐</button>
+        <button data-font="LiuJianMaoCao">Liu Jian Mao Cao 毛草</button>
+        <button data-font="ZCOOLQingKe">ZCOOL QingKe 庆科</button>
+    </div>
+
+    <div class="stage" id="stage">
+        <div class="chars">
+            <span class="c1">方</span>
+            <span class="c2">片</span>
+        </div>
+        <div class="wordmark">
+            <h1>FANG PIAN</h1>
+            <p>方片新媒体 · 校园运营</p>
+        </div>
+    </div>
+
+    <div class="meta">点上方按钮切换字体 · 切换后会自动重播一次 · 这只是<b>字体对比页</b>,主站开屏不受影响</div>
+
+    <script>
+        const stage = document.getElementById('stage');
+        function play() {
+            stage.classList.remove('play');
+            void stage.offsetWidth; // reflow,重置 transition
+            stage.classList.add('play');
+        }
+        document.querySelectorAll('.picker button').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.picker button').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                document.body.setAttribute('data-font', btn.getAttribute('data-font'));
+                play();
+            });
+        });
+        // 进站默认播放一次
+        setTimeout(play, 200);
+    </script>
+</body>
+</html>
