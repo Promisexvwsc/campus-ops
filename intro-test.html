@@ -121,25 +121,25 @@
         body[data-v="wipe"] .chars,
         body[data-v="wipe"] .hz-pair { display: none; }
         body[data-v="wipe"] .wipe-stage { display: block; }
-        /* 5 笔不同方向,时序部分重叠模拟来回擦 */
+        /* 5 笔统一方向,微重叠,一只手稳定扫过 */
         body[data-v="wipe"].play .wipe-stage .s1 {
-            transition: stroke-dashoffset 0.70s cubic-bezier(0.45,0,0.35,1) 0.20s;
+            transition: stroke-dashoffset 0.55s cubic-bezier(0.4,0,0.3,1) 0.20s;
             stroke-dashoffset: 0;
         }
         body[data-v="wipe"].play .wipe-stage .s2 {
-            transition: stroke-dashoffset 0.65s cubic-bezier(0.45,0,0.35,1) 0.55s;
+            transition: stroke-dashoffset 0.55s cubic-bezier(0.4,0,0.3,1) 0.45s;
             stroke-dashoffset: 0;
         }
         body[data-v="wipe"].play .wipe-stage .s3 {
-            transition: stroke-dashoffset 0.60s cubic-bezier(0.45,0,0.35,1) 0.90s;
+            transition: stroke-dashoffset 0.55s cubic-bezier(0.4,0,0.3,1) 0.70s;
             stroke-dashoffset: 0;
         }
         body[data-v="wipe"].play .wipe-stage .s4 {
-            transition: stroke-dashoffset 0.55s cubic-bezier(0.45,0,0.35,1) 1.20s;
+            transition: stroke-dashoffset 0.55s cubic-bezier(0.4,0,0.3,1) 0.95s;
             stroke-dashoffset: 0;
         }
         body[data-v="wipe"].play .wipe-stage .s5 {
-            transition: stroke-dashoffset 0.50s cubic-bezier(0.45,0,0.35,1) 1.50s;
+            transition: stroke-dashoffset 0.55s cubic-bezier(0.4,0,0.3,1) 1.20s;
             stroke-dashoffset: 0;
         }
 
@@ -223,7 +223,7 @@
         body[data-v="slide"].play .wordmark { transition-delay: 1.8s; }
         body[data-v="glow"].play .wordmark { transition-delay: 2.4s; }
         body[data-v="hanzi"].play .wordmark { transition-delay: 0s; }  /* JS 控制时机 */
-        body[data-v="wipe"].play .wordmark { transition-delay: 2.2s; }
+        body[data-v="wipe"].play .wordmark { transition-delay: 1.95s; }
         .wordmark h1 {
             font-family: "Inter", "Helvetica Neue", Arial, sans-serif;
             font-size: 22px;
@@ -343,25 +343,20 @@
                         0    0    0.55 0    0.10
                         0    0    0    0.92 0"/>
                 </filter>
-                <!-- 5 笔擦窗 mask:黑色 = 雾被擦掉,露出底层清晰图 -->
+                <!-- 5 笔统一方向(左下 → 右上),平行错位,起止都在画面外 -->
                 <mask id="cleanMask">
                     <rect width="1200" height="660" fill="white"/>
                     <g>
-                        <!-- S1: 上沿 →,长曲线 -->
-                        <path class="swipe s1" pathLength="100" stroke-width="280"
-                              d="M -120,140 C 250,60 750,260 1320,170"/>
-                        <!-- S2: 上右 → 下左,反方向 -->
-                        <path class="swipe s2" pathLength="100" stroke-width="260"
-                              d="M 1300,80 C 900,360 350,300 -150,540"/>
-                        <!-- S3: 下沿 →,补足底部 -->
-                        <path class="swipe s3" pathLength="100" stroke-width="290"
-                              d="M -100,520 C 400,580 850,420 1320,540"/>
-                        <!-- S4: 中央对角,左上 → 右下,大幅度 -->
-                        <path class="swipe s4" pathLength="100" stroke-width="240"
-                              d="M -100,-50 C 250,250 850,460 1320,720"/>
-                        <!-- S5: 右侧重点补一笔,垂直下行 -->
-                        <path class="swipe s5" pathLength="100" stroke-width="220"
-                              d="M 1080,-60 C 920,260 1000,440 1120,720"/>
+                        <path class="swipe s1" pathLength="100" stroke-width="300"
+                              d="M -300,780 Q 150,420 700,-160"/>
+                        <path class="swipe s2" pathLength="100" stroke-width="300"
+                              d="M -80,780 Q 380,420 920,-160"/>
+                        <path class="swipe s3" pathLength="100" stroke-width="300"
+                              d="M 140,780 Q 600,420 1140,-160"/>
+                        <path class="swipe s4" pathLength="100" stroke-width="300"
+                              d="M 380,780 Q 830,420 1370,-160"/>
+                        <path class="swipe s5" pathLength="100" stroke-width="300"
+                              d="M 620,780 Q 1080,420 1620,-160"/>
                     </g>
                 </mask>
             </defs>
@@ -388,7 +383,7 @@
             slide: '<b>方案 B · 合拢</b> ─ 方从左、片从右滑入,在中央合并,缓出曲线',
             glow:  '<b>方案 C · 墨晕</b> ─ 由虚化高光凝聚成清晰字(blur 22→0, brightness 2.4→1.0),序贯出现',
             hanzi: '<b>方案 D · 笔顺(主站现版)</b> ─ HanziWriter 楷书一笔一划,真笔顺数据驱动',
-            wipe:  '<b>方案 E · 擦窗</b> ─ 5 笔不同角度斜擦,SVG mask 逐笔抹掉雾层(笔触可越界),品牌字渐显',
+            wipe:  '<b>方案 E · 擦窗</b> ─ 5 笔统一方向(左下→右上)平行错位,每笔起止都在画面外,逐笔擦出 logo',
         };
         const body = document.body;
         // ===== 方案 D:HanziWriter 笔顺 =====
