@@ -1587,8 +1587,8 @@
                 const opts = {
                     width: cellW, height: cellW, padding: 8,
                     strokeColor: '#fbbf24',
-                    strokeAnimationSpeed: 1.4,
-                    delayBetweenStrokes: 160,
+                    strokeAnimationSpeed: 2.6,    // 1.4 → 2.6,每笔写得更快
+                    delayBetweenStrokes: 70,      // 160 → 70,笔间间隔砍掉一半多
                     showOutline: false,
                     showCharacter: false,
                     charDataLoader: (c, onLoad) => onLoad(charData[c]),
@@ -1596,11 +1596,11 @@
                 const fang = HanziWriter.create('hz-fang', '方', opts);
                 const pian = HanziWriter.create('hz-pian', '片', opts);
                 await new Promise(r => fang.animateCharacter({ onComplete: r }));
-                await new Promise(r => setTimeout(r, 220));
+                await new Promise(r => setTimeout(r, 100));   // 字间停顿 220 → 100
                 await new Promise(r => pian.animateCharacter({ onComplete: r }));
-                await new Promise(r => setTimeout(r, 320));
+                await new Promise(r => setTimeout(r, 180));   // 写完到落款 320 → 180
                 document.querySelector('.intro-wordmark')?.classList.add('show');
-                await new Promise(r => setTimeout(r, 1100));
+                await new Promise(r => setTimeout(r, 600));   // 落款定格 1100 → 600
                 dismissIntro();
             } catch (e) {
                 console.warn('Intro animation failed:', e);
