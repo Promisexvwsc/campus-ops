@@ -89,6 +89,11 @@
             transition-timing-function: cubic-bezier(0.34, 1.56, 0.64, 1);
             will-change: opacity, transform, filter;
         }
+        /* 切换/重播时临时禁用 transition,让字瞬移回初始位置 */
+        body.no-transition .chars span,
+        body.no-transition .wordmark {
+            transition: none !important;
+        }
 
         /* ===== 方案 A: 渐现(scale 0.4→1.0, opacity 0→1) ===== */
         body[data-v="scale"] .chars span {
@@ -274,11 +279,18 @@
         };
         const body = document.body;
         function play() {
+            // ① 禁用 transition,移除 play → 字瞬间归位到初始状态(不动画)
+            body.classList.add('no-transition');
             body.classList.remove('play');
-            // 双 rAF:确保浏览器在两帧之间提交了"无 play"状态,transition 才会重新跑
+            // ② 等 2 帧让浏览器提交初始状态
             requestAnimationFrame(() => {
                 requestAnimationFrame(() => {
-                    body.classList.add('play');
+                    // ③ 恢复 transition
+                    body.classList.remove('no-transition');
+                    // ④ 再多等 1 帧让 CSS 规则生效,然后加 play → 触发动画
+                    requestAnimationFrame(() => {
+                        body.classList.add('play');
+                    });
                 });
             });
         }
