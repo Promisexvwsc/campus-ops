@@ -102,42 +102,49 @@
         body[data-v="hanzi"] .chars { display: none; }
         body[data-v="hanzi"] .hz-pair { display: flex; }
 
-        /* ===== 方案 E 容器:擦玻璃揭幕 ===== */
+        /* ===== 方案 E 容器:多笔斜擦,SVG mask 控制 ===== */
         .wipe-stage {
             display: none;
-            position: relative;
-            width: 600px;
-            height: 330px;
+            width: 640px;
+            aspect-ratio: 1200 / 660;
             filter: drop-shadow(0 0 16px rgba(251,191,36,0.35));
+            overflow: visible;
         }
-        .wipe-stage img {
-            display: block;
-            width: 100%;
-            height: 100%;
-            object-fit: contain;
+        .wipe-stage .swipe {
+            fill: none;
+            stroke: black;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+            stroke-dasharray: 100;
+            stroke-dashoffset: 100;
         }
-        .wipe-fog {
-            position: absolute;
-            inset: 0;
-            background: rgba(210,220,240,0.18);
-            backdrop-filter: blur(22px) brightness(0.55) saturate(0.4);
-            -webkit-backdrop-filter: blur(22px) brightness(0.55) saturate(0.4);
-            /* 初始:斜向覆盖整图 + 余量 */
-            clip-path: polygon(-40% 0, 130% 0, 130% 100%, -20% 100%);
-            transition: clip-path 2.4s cubic-bezier(0.65, 0, 0.35, 1);
-        }
-        /* 切到方案 E:隐藏其他字层,显示擦窗舞台 */
         body[data-v="wipe"] .chars,
         body[data-v="wipe"] .hz-pair { display: none; }
         body[data-v="wipe"] .wipe-stage { display: block; }
-        /* 触发:雾被向右抹掉,带轻微对角倾斜 */
-        body[data-v="wipe"].play .wipe-fog {
-            clip-path: polygon(130% 0, 200% 0, 200% 100%, 150% 100%);
-            transition-delay: 0.3s;
+        /* 5 笔不同方向,时序部分重叠模拟来回擦 */
+        body[data-v="wipe"].play .wipe-stage .s1 {
+            transition: stroke-dashoffset 0.70s cubic-bezier(0.45,0,0.35,1) 0.20s;
+            stroke-dashoffset: 0;
+        }
+        body[data-v="wipe"].play .wipe-stage .s2 {
+            transition: stroke-dashoffset 0.65s cubic-bezier(0.45,0,0.35,1) 0.55s;
+            stroke-dashoffset: 0;
+        }
+        body[data-v="wipe"].play .wipe-stage .s3 {
+            transition: stroke-dashoffset 0.60s cubic-bezier(0.45,0,0.35,1) 0.90s;
+            stroke-dashoffset: 0;
+        }
+        body[data-v="wipe"].play .wipe-stage .s4 {
+            transition: stroke-dashoffset 0.55s cubic-bezier(0.45,0,0.35,1) 1.20s;
+            stroke-dashoffset: 0;
+        }
+        body[data-v="wipe"].play .wipe-stage .s5 {
+            transition: stroke-dashoffset 0.50s cubic-bezier(0.45,0,0.35,1) 1.50s;
+            stroke-dashoffset: 0;
         }
 
         @media (max-width: 600px) {
-            .wipe-stage { width: 92vw; height: calc(92vw * 0.55); }
+            .wipe-stage { width: 92vw; }
         }
         .chars span {
             display: inline-block;
@@ -216,7 +223,7 @@
         body[data-v="slide"].play .wordmark { transition-delay: 1.8s; }
         body[data-v="glow"].play .wordmark { transition-delay: 2.4s; }
         body[data-v="hanzi"].play .wordmark { transition-delay: 0s; }  /* JS 控制时机 */
-        body[data-v="wipe"].play .wordmark { transition-delay: 2.6s; }
+        body[data-v="wipe"].play .wordmark { transition-delay: 2.2s; }
         .wordmark h1 {
             font-family: "Inter", "Helvetica Neue", Arial, sans-serif;
             font-size: 22px;
@@ -325,10 +332,45 @@
             <div id="hz-fang" class="hz-cell"></div>
             <div id="hz-pian" class="hz-cell"></div>
         </div>
-        <div class="wipe-stage">
-            <img src="fangpian.webp" alt="方片">
-            <div class="wipe-fog"></div>
-        </div>
+        <svg class="wipe-stage" viewBox="0 0 1200 660" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+                <!-- 雾化滤镜:把图模糊+压暗+去饱和 → 像隔层脏玻璃 -->
+                <filter id="fogFilter" x="-10%" y="-10%" width="120%" height="120%">
+                    <feGaussianBlur in="SourceGraphic" stdDeviation="18" result="b"/>
+                    <feColorMatrix in="b" type="matrix" values="
+                        0.55 0    0    0    0.05
+                        0    0.55 0    0    0.05
+                        0    0    0.55 0    0.10
+                        0    0    0    0.92 0"/>
+                </filter>
+                <!-- 5 笔擦窗 mask:黑色 = 雾被擦掉,露出底层清晰图 -->
+                <mask id="cleanMask">
+                    <rect width="1200" height="660" fill="white"/>
+                    <g>
+                        <!-- S1: 上沿 →,长曲线 -->
+                        <path class="swipe s1" pathLength="100" stroke-width="280"
+                              d="M -120,140 C 250,60 750,260 1320,170"/>
+                        <!-- S2: 上右 → 下左,反方向 -->
+                        <path class="swipe s2" pathLength="100" stroke-width="260"
+                              d="M 1300,80 C 900,360 350,300 -150,540"/>
+                        <!-- S3: 下沿 →,补足底部 -->
+                        <path class="swipe s3" pathLength="100" stroke-width="290"
+                              d="M -100,520 C 400,580 850,420 1320,540"/>
+                        <!-- S4: 中央对角,左上 → 右下,大幅度 -->
+                        <path class="swipe s4" pathLength="100" stroke-width="240"
+                              d="M -100,-50 C 250,250 850,460 1320,720"/>
+                        <!-- S5: 右侧重点补一笔,垂直下行 -->
+                        <path class="swipe s5" pathLength="100" stroke-width="220"
+                              d="M 1080,-60 C 920,260 1000,440 1120,720"/>
+                    </g>
+                </mask>
+            </defs>
+            <!-- 底层:清晰品牌图 -->
+            <image href="fangpian.webp" width="1200" height="660" preserveAspectRatio="xMidYMid meet"/>
+            <!-- 上层:同一张图但雾化,通过 mask 被一笔笔擦掉 -->
+            <image href="fangpian.webp" width="1200" height="660" preserveAspectRatio="xMidYMid meet"
+                   filter="url(#fogFilter)" mask="url(#cleanMask)"/>
+        </svg>
         <div class="wordmark">
             <h1>FANG PIAN</h1>
             <p>方片新媒体 · 校园运营</p>
@@ -346,7 +388,7 @@
             slide: '<b>方案 B · 合拢</b> ─ 方从左、片从右滑入,在中央合并,缓出曲线',
             glow:  '<b>方案 C · 墨晕</b> ─ 由虚化高光凝聚成清晰字(blur 22→0, brightness 2.4→1.0),序贯出现',
             hanzi: '<b>方案 D · 笔顺(主站现版)</b> ─ HanziWriter 楷书一笔一划,真笔顺数据驱动',
-            wipe:  '<b>方案 E · 擦窗</b> ─ logo 原图被磨砂雾覆盖,clip-path 斜向抹掉雾层,品牌字渐渐显出',
+            wipe:  '<b>方案 E · 擦窗</b> ─ 5 笔不同角度斜擦,SVG mask 逐笔抹掉雾层(笔触可越界),品牌字渐显',
         };
         const body = document.body;
         // ===== 方案 D:HanziWriter 笔顺 =====
