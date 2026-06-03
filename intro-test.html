@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>开屏动画测试 · 多方案对比</title>
+    <script src="hanzi-writer.min.js"></script>
     <style>
         @font-face {
             font-family: "MaShanZheng";
@@ -82,6 +83,24 @@
             user-select: none;
             filter: drop-shadow(0 0 16px rgba(251,191,36,0.35));
         }
+        /* ===== 方案 D 容器:HanziWriter 笔顺 ===== */
+        .hz-pair {
+            display: none;
+            gap: 28px;
+            filter: drop-shadow(0 0 16px rgba(251,191,36,0.35));
+        }
+        .hz-cell {
+            width: 220px;
+            height: 220px;
+        }
+        .hz-cell svg {
+            display: block;
+            width: 100% !important;
+            height: 100% !important;
+        }
+        /* 切到方案 D 时:CSS 字隐藏,HanziWriter 画板显示 */
+        body[data-v="hanzi"] .chars { display: none; }
+        body[data-v="hanzi"] .hz-pair { display: flex; }
         .chars span {
             display: inline-block;
             transition-property: opacity, transform, filter;
@@ -158,6 +177,7 @@
         body[data-v="scale"].play .wordmark { transition-delay: 2.0s; }
         body[data-v="slide"].play .wordmark { transition-delay: 1.8s; }
         body[data-v="glow"].play .wordmark { transition-delay: 2.4s; }
+        body[data-v="hanzi"].play .wordmark { transition-delay: 0s; }  /* JS 控制时机 */
         .wordmark h1 {
             font-family: "Inter", "Helvetica Neue", Arial, sans-serif;
             font-size: 22px;
@@ -251,6 +271,7 @@
         <button data-v="scale" class="active">A · 渐现</button>
         <button data-v="slide">B · 合拢</button>
         <button data-v="glow">C · 墨晕</button>
+        <button data-v="hanzi">D · 笔顺(主站)</button>
         <span class="sep"></span>
         <button class="replay" id="replay">重播</button>
     </div>
@@ -259,6 +280,10 @@
         <div class="chars">
             <span class="c1">方</span>
             <span class="c2">片</span>
+        </div>
+        <div class="hz-pair">
+            <div id="hz-fang" class="hz-cell"></div>
+            <div id="hz-pian" class="hz-cell"></div>
         </div>
         <div class="wordmark">
             <h1>FANG PIAN</h1>
@@ -276,21 +301,73 @@
             scale: '<b>方案 A · 渐现</b> ─ 两字 scale 0.4→1.0 + opacity 0→1,弹性缓动,序贯出现',
             slide: '<b>方案 B · 合拢</b> ─ 方从左、片从右滑入,在中央合并,缓出曲线',
             glow:  '<b>方案 C · 墨晕</b> ─ 由虚化高光凝聚成清晰字(blur 22→0, brightness 2.4→1.0),序贯出现',
+            hanzi: '<b>方案 D · 笔顺(主站现版)</b> ─ HanziWriter 楷书一笔一划,真笔顺数据驱动',
         };
         const body = document.body;
+        // ===== 方案 D:HanziWriter 笔顺 =====
+        let hzData = null;
+        let hzPlayToken = 0;  // 用来取消上一次未跑完的播放
+        async function ensureHzData() {
+            if (hzData) return hzData;
+            const [f, p] = await Promise.all([
+                fetch('hz-fang.json').then(r => r.json()),
+                fetch('hz-pian.json').then(r => r.json()),
+            ]);
+            hzData = { '方': f, '片': p };
+            return hzData;
+        }
+        async function playHanzi() {
+            const token = ++hzPlayToken;
+            try {
+                await ensureHzData();
+                if (token !== hzPlayToken) return;  // 期间用户切到别的方案了
+                // 清掉上次 HanziWriter 生成的 SVG
+                document.getElementById('hz-fang').innerHTML = '';
+                document.getElementById('hz-pian').innerHTML = '';
+                const cellEl = document.getElementById('hz-fang');
+                const cellW = Math.max(80, Math.round(cellEl.getBoundingClientRect().width)) || 220;
+                const opts = {
+                    width: cellW, height: cellW, padding: 8,
+                    strokeColor: '#fbbf24',
+                    strokeAnimationSpeed: 2.0,
+                    delayBetweenStrokes: 110,
+                    showOutline: false,
+                    showCharacter: false,
+                    charDataLoader: (c, onLoad) => onLoad(hzData[c]),
+                };
+                const fang = HanziWriter.create('hz-fang', '方', opts);
+                const pian = HanziWriter.create('hz-pian', '片', opts);
+                await new Promise(r => fang.animateCharacter({ onComplete: r }));
+                if (token !== hzPlayToken) return;
+                await new Promise(r => setTimeout(r, 160));
+                if (token !== hzPlayToken) return;
+                await new Promise(r => pian.animateCharacter({ onComplete: r }));
+                if (token !== hzPlayToken) return;
+                await new Promise(r => setTimeout(r, 250));
+                if (token !== hzPlayToken) return;
+                // 落款:把 .play 加上,触发 wordmark transition
+                body.classList.add('play');
+            } catch (e) {
+                console.warn('HanziWriter failed:', e);
+            }
+        }
         function play() {
             // ① 禁用 transition,移除 play → 字瞬间归位到初始状态(不动画)
             body.classList.add('no-transition');
             body.classList.remove('play');
-            // ② 等 2 帧让浏览器提交初始状态
+            ++hzPlayToken;  // 取消任何进行中的 HanziWriter 播放
             requestAnimationFrame(() => {
                 requestAnimationFrame(() => {
-                    // ③ 恢复 transition
                     body.classList.remove('no-transition');
-                    // ④ 再多等 1 帧让 CSS 规则生效,然后加 play → 触发动画
-                    requestAnimationFrame(() => {
-                        body.classList.add('play');
-                    });
+                    if (body.dataset.v === 'hanzi') {
+                        // 方案 D:JS 串行写完才显落款
+                        playHanzi();
+                    } else {
+                        // 方案 A/B/C:纯 CSS transition
+                        requestAnimationFrame(() => {
+                            body.classList.add('play');
+                        });
+                    }
                 });
             });
         }
