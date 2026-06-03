@@ -108,49 +108,62 @@
         body[data-v="hanzi"] .chars { display: none; }
         body[data-v="hanzi"] .hz-pair { display: flex; }
 
-        /* ===== 方案 E 容器:多笔斜擦,SVG mask 控制 ===== */
-        .wipe-stage {
+        /* ===== 方案 E:全屏白雾 + 5 笔斜擦 ===== */
+        /* 中央 logo 图(底层) */
+        .wipe-logo-bg {
             display: none;
-            width: 520px;
-            aspect-ratio: 1 / 1;
-            overflow: visible;
+            position: fixed;
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+            width: min(58vmin, 560px);
+            height: auto;
+            z-index: 2;
+            user-select: none;
+            pointer-events: none;
         }
-        .wipe-stage .swipe {
+        /* 全屏白雾覆盖层 */
+        .wipe-fog-full {
+            display: none;
+            position: fixed;
+            inset: 0;
+            width: 100vw;
+            height: 100vh;
+            z-index: 8;
+            pointer-events: none;
+        }
+        .wipe-fog-full .swipe {
             fill: none;
             stroke: black;
             stroke-linecap: round;
-            stroke-linejoin: round;
             stroke-dasharray: 100;
             stroke-dashoffset: 100;
         }
         body[data-v="wipe"] .chars,
         body[data-v="wipe"] .hz-pair,
-        body[data-v="wipe"] .wordmark { display: none; }  /* logo 自带文字,不重复落款 */
-        body[data-v="wipe"] .wipe-stage { display: block; }
-        /* 5 笔统一方向,微重叠,一只手稳定扫过 */
-        body[data-v="wipe"].play .wipe-stage .s1 {
+        body[data-v="wipe"] .wordmark,
+        body[data-v="wipe"] .stage { display: none; }
+        body[data-v="wipe"] .wipe-logo-bg { display: block; }
+        body[data-v="wipe"] .wipe-fog-full { display: block; }
+        /* 5 笔统一方向(左下→右上),节奏依次 */
+        body[data-v="wipe"].play .wipe-fog-full .s1 {
             transition: stroke-dashoffset 0.55s cubic-bezier(0.4,0,0.3,1) 0.20s;
             stroke-dashoffset: 0;
         }
-        body[data-v="wipe"].play .wipe-stage .s2 {
+        body[data-v="wipe"].play .wipe-fog-full .s2 {
             transition: stroke-dashoffset 0.55s cubic-bezier(0.4,0,0.3,1) 0.45s;
             stroke-dashoffset: 0;
         }
-        body[data-v="wipe"].play .wipe-stage .s3 {
+        body[data-v="wipe"].play .wipe-fog-full .s3 {
             transition: stroke-dashoffset 0.55s cubic-bezier(0.4,0,0.3,1) 0.70s;
             stroke-dashoffset: 0;
         }
-        body[data-v="wipe"].play .wipe-stage .s4 {
+        body[data-v="wipe"].play .wipe-fog-full .s4 {
             transition: stroke-dashoffset 0.55s cubic-bezier(0.4,0,0.3,1) 0.95s;
             stroke-dashoffset: 0;
         }
-        body[data-v="wipe"].play .wipe-stage .s5 {
+        body[data-v="wipe"].play .wipe-fog-full .s5 {
             transition: stroke-dashoffset 0.55s cubic-bezier(0.4,0,0.3,1) 1.20s;
             stroke-dashoffset: 0;
-        }
-
-        @media (max-width: 600px) {
-            .wipe-stage { width: 92vw; }
         }
 
         /* ===== 方案 F:对角分幕揭幕(参考 Awwwards / goldnead 案例) ===== */
@@ -389,39 +402,25 @@
             <div id="hz-fang" class="hz-cell"></div>
             <div id="hz-pian" class="hz-cell"></div>
         </div>
-        <svg class="wipe-stage" viewBox="0 0 1280 1280" xmlns="http://www.w3.org/2000/svg">
+        <!-- 方案 E:中央 logo + 全屏白雾 -->
+        <img class="wipe-logo-bg" src="fangpian-full.webp" alt="方片">
+        <svg class="wipe-fog-full" viewBox="0 0 100 100" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
             <defs>
-                <!-- 雾化滤镜:模糊+压暗+去饱和,像隔层脏玻璃 -->
-                <filter id="fogFilter" x="-10%" y="-10%" width="120%" height="120%">
-                    <feGaussianBlur in="SourceGraphic" stdDeviation="20" result="b"/>
-                    <feColorMatrix in="b" type="matrix" values="
-                        0.55 0    0    0    0.05
-                        0    0.55 0    0    0.05
-                        0    0    0.55 0    0.10
-                        0    0    0    0.92 0"/>
-                </filter>
-                <!-- 5 笔统一方向(左下→右上),平行错位,起止全在画面外 -->
-                <mask id="cleanMask">
-                    <rect width="1280" height="1280" fill="white"/>
+                <!-- 全屏 mask:黑色 = 雾被擦掉 -->
+                <mask id="fullScreenMask">
+                    <rect width="100" height="100" fill="white"/>
                     <g>
-                        <path class="swipe s1" pathLength="100" stroke-width="360"
-                              d="M -320,1420 Q 200,750 820,-220"/>
-                        <path class="swipe s2" pathLength="100" stroke-width="360"
-                              d="M -50,1420 Q 470,750 1090,-220"/>
-                        <path class="swipe s3" pathLength="100" stroke-width="360"
-                              d="M 220,1420 Q 740,750 1360,-220"/>
-                        <path class="swipe s4" pathLength="100" stroke-width="360"
-                              d="M 490,1420 Q 1010,750 1630,-220"/>
-                        <path class="swipe s5" pathLength="100" stroke-width="360"
-                              d="M 760,1420 Q 1280,750 1900,-220"/>
+                        <!-- 5 笔统一方向(左下→右上),起止全在画外 -->
+                        <path class="swipe s1" pathLength="100" stroke-width="28" d="M -28,130 L 72,-30"/>
+                        <path class="swipe s2" pathLength="100" stroke-width="28" d="M -5,130 L 95,-30"/>
+                        <path class="swipe s3" pathLength="100" stroke-width="28" d="M 18,130 L 118,-30"/>
+                        <path class="swipe s4" pathLength="100" stroke-width="28" d="M 42,130 L 142,-30"/>
+                        <path class="swipe s5" pathLength="100" stroke-width="28" d="M 66,130 L 166,-30"/>
                     </g>
                 </mask>
             </defs>
-            <!-- 底层:清晰完整 logo -->
-            <image href="fangpian-full.webp" width="1280" height="1280"/>
-            <!-- 上层:同一张 logo 雾化,通过 mask 被一笔笔擦掉 -->
-            <image href="fangpian-full.webp" width="1280" height="1280"
-                   filter="url(#fogFilter)" mask="url(#cleanMask)"/>
+            <!-- 白雾铺满,通过 mask 一笔笔被擦掉 -->
+            <rect width="100" height="100" fill="white" mask="url(#fullScreenMask)"/>
         </svg>
         <!-- 方案 F:对角分幕揭幕 -->
         <div class="curtain-stage">
@@ -446,7 +445,7 @@
             slide: '<b>方案 B · 合拢</b> ─ 方从左、片从右滑入,在中央合并,缓出曲线',
             glow:  '<b>方案 C · 墨晕</b> ─ 由虚化高光凝聚成清晰字(blur 22→0, brightness 2.4→1.0),序贯出现',
             hanzi: '<b>方案 D · 笔顺(主站现版)</b> ─ HanziWriter 楷书一笔一划,真笔顺数据驱动',
-            wipe:  '<b>方案 E · 擦窗</b> ─ 完整品牌 logo(方片+FANG PIAN+方片新媒体),5 笔左下→右上平行斜擦,无边框',
+            wipe:  '<b>方案 E · 擦窗</b> ─ 全屏白雾覆盖,5 笔左下→右上斜擦,雾散露出中央 logo',
             curtain: '<b>方案 F · 帷幕</b> ─ 两片黑色三角沿对角线裂开向两边滑出,后面 logo 同步轻微回缩到位(借鉴 Awwwards/codepen 高频套路)',
         };
         const body = document.body;
