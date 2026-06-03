@@ -119,7 +119,7 @@
             transition: none !important;
         }
 
-        /* ===== 方案 A: 渐现(scale 0.4→1.0, opacity 0→1) ===== */
+        /* ===== 方案 A: 渐现(scale 0.4→1.0, opacity 0→1,序贯出现) ===== */
         body[data-v="scale"] .chars span {
             opacity: 0;
             transform: scale(0.4);
@@ -129,6 +129,19 @@
         }
         body[data-v="scale"].play .chars span.c2 {
             opacity: 1; transform: scale(1); transition-delay: 1.0s;
+        }
+
+        /* ===== 方案 E: 同显(两字一起 scale 0.4→1.0 + opacity 0→1) ===== */
+        body[data-v="together"] .chars span {
+            opacity: 0;
+            transform: scale(0.4);
+        }
+        body[data-v="together"].play .chars span {
+            opacity: 1;
+            transform: scale(1);
+            transition-delay: 0.3s;
+            transition-duration: 0.75s;
+            transition-timing-function: cubic-bezier(0.34, 1.56, 0.64, 1);
         }
 
         /* ===== 方案 B: 合拢(两字从左右滑入中央,位移按视口比例) ===== */
@@ -186,6 +199,7 @@
         body[data-v="slide"].play .wordmark { transition-delay: 1.8s; }
         body[data-v="glow"].play .wordmark { transition-delay: 2.4s; }
         body[data-v="hanzi"].play .wordmark { transition-delay: 0s; }  /* JS 控制时机 */
+        body[data-v="together"].play .wordmark { transition-delay: 1.25s; }
         .wordmark h1 {
             font-family: "Inter", "Helvetica Neue", Arial, sans-serif;
             font-size: clamp(14px, 3vw, 28px);
@@ -277,6 +291,7 @@
         <button data-v="slide">B · 合拢</button>
         <button data-v="glow">C · 墨晕</button>
         <button data-v="hanzi">D · 笔顺(主站)</button>
+        <button data-v="together">E · 同显</button>
         <span class="sep"></span>
         <button class="replay" id="replay">重播</button>
     </div>
@@ -307,6 +322,7 @@
             slide: '<b>方案 B · 合拢</b> ─ 方从左、片从右滑入,在中央合并,缓出曲线',
             glow:  '<b>方案 C · 墨晕</b> ─ 由虚化高光凝聚成清晰字(blur 22→0, brightness 2.4→1.0),序贯出现',
             hanzi: '<b>方案 D · 笔顺(主站现版)</b> ─ HanziWriter 楷书一笔一划,真笔顺数据驱动',
+            together: '<b>方案 E · 同显</b> ─ 两字同时 scale 0.4→1.0 + opacity 0→1,弹性缓动,一拍出现',
         };
         const body = document.body;
         // ===== 方案 D:HanziWriter 笔顺 =====
