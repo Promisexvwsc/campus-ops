@@ -275,8 +275,12 @@
         const body = document.body;
         function play() {
             body.classList.remove('play');
-            void body.offsetWidth;
-            body.classList.add('play');
+            // 双 rAF:确保浏览器在两帧之间提交了"无 play"状态,transition 才会重新跑
+            requestAnimationFrame(() => {
+                requestAnimationFrame(() => {
+                    body.classList.add('play');
+                });
+            });
         }
         document.querySelectorAll('.ctrl button[data-v]').forEach(btn => {
             btn.addEventListener('click', () => {
