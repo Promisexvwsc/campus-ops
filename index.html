@@ -580,14 +580,14 @@
                 inset 0 0 40px rgba(251,191,36,0.10);
         }
         .intro-loader::before {
-            width: clamp(220px, 28vmin, 480px);
-            height: clamp(220px, 28vmin, 480px);
+            width: clamp(110px, 22vmin, 480px);
+            height: clamp(110px, 22vmin, 480px);
             top: 10%; right: 8%;
             animation: drift-a 8s ease-in-out infinite, glow-pulse-a 4.5s ease-in-out infinite;
         }
         .intro-loader::after {
-            width: clamp(160px, 22vmin, 360px);
-            height: clamp(160px, 22vmin, 360px);
+            width: clamp(80px, 18vmin, 360px);
+            height: clamp(80px, 18vmin, 360px);
             bottom: 12%; left: 10%;
             animation: drift-b 10s ease-in-out infinite, glow-pulse-b 5.5s ease-in-out infinite 1.2s;
         }
@@ -625,8 +625,10 @@
             position: relative;
             display: flex; flex-direction: column;
             align-items: center;
-            gap: clamp(28px, 4vmin, 60px);
+            gap: clamp(20px, 3.5vmin, 60px);
             z-index: 1;
+            padding: 0 16px;  /* 防止小屏贴边 */
+            max-width: 100vw;
         }
         /* ===== 方片 一笔一划(HanziWriter 真笔顺动画) ===== */
         .intro-ink {
@@ -637,13 +639,17 @@
         }
         .hz-pair {
             display: flex;
-            gap: clamp(28px, 3vmin, 56px);
+            gap: clamp(16px, 2.5vw, 56px);
         }
         .hz-cell {
-            width: clamp(180px, 26vmin, 460px);
-            height: clamp(180px, 26vmin, 460px);
+            width: clamp(120px, 22vw, 460px);
+            height: clamp(120px, 22vw, 460px);
         }
-        .hz-cell svg { display: block; }
+        .hz-cell svg {
+            display: block;
+            width: 100% !important;
+            height: 100% !important;
+        }
 
         .intro-wordmark {
             text-align: center;
@@ -657,19 +663,19 @@
         }
         .intro-wordmark h1 {
             font-family: "Inter", "Helvetica Neue", Arial, sans-serif;
-            font-size: clamp(22px, 3.4vmin, 56px);
+            font-size: clamp(16px, 3vw, 56px);
             font-weight: 700;
             color: #fbbf24;
-            letter-spacing: clamp(8px, 1.2vmin, 18px);
-            padding-left: clamp(8px, 1.2vmin, 18px);
+            letter-spacing: clamp(4px, 1vw, 18px);
+            padding-left: clamp(4px, 1vw, 18px);
             line-height: 1;
-            margin: 0 0 clamp(10px, 1.4vmin, 22px) 0;
+            margin: 0 0 clamp(8px, 1.2vw, 22px) 0;
         }
         .intro-wordmark p {
-            font-size: clamp(12px, 1.9vmin, 30px);
+            font-size: clamp(10px, 1.8vw, 30px);
             color: rgba(251,191,36,0.7);
-            letter-spacing: clamp(5px, 0.9vmin, 13px);
-            padding-left: clamp(5px, 0.9vmin, 13px);
+            letter-spacing: clamp(3px, 0.8vw, 13px);
+            padding-left: clamp(3px, 0.8vw, 13px);
             font-weight: 500;
             margin: 0;
         }
@@ -1602,7 +1608,9 @@
         async function runIntro() {
             try {
                 if (!window.HanziWriter) throw new Error('HanziWriter not loaded');
-                const cellW = window.innerWidth < 600 ? 140 : 220;
+                // 读取 CSS clamp 计算后的实际尺寸 → SVG 总能完美填满 cell
+                const cellEl = document.getElementById('hz-fang');
+                const cellW = Math.max(80, Math.round(cellEl.getBoundingClientRect().width)) || 220;
                 const charData = { '方': null, '片': null };
                 await Promise.all([
                     fetch('hz-fang.json').then(r => r.json()).then(d => charData['方'] = d),
