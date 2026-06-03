@@ -601,7 +601,7 @@
             align-items: center; gap: 28px;
             z-index: 1;
         }
-        /* ===== 方片 开屏(Ma Shan Zheng 毛笔字 + 逐字渐显) ===== */
+        /* ===== 方片 开屏(Ma Shan Zheng 字 + 逐笔 clip-path 区域揭幕) ===== */
         @font-face {
             font-family: "MaShanZheng";
             src: url("fonts/Ma_Shan_Zheng.ttf") format("truetype");
@@ -615,7 +615,7 @@
         }
         .brand-chars {
             display: flex;
-            gap: 36px;
+            gap: 40px;
             font-family: "MaShanZheng", "STKaiti", "KaiTi", serif;
             font-size: 220px;
             font-weight: 700;
@@ -623,13 +623,35 @@
             color: #fbbf24;
             user-select: none;
         }
-        .brand-chars span {
+        .char-stack {
+            position: relative;
             display: inline-block;
-            clip-path: inset(0 100% 0 0);
-            transition: clip-path 0.85s cubic-bezier(0.65, 0.05, 0.35, 1);
+            width: 1em;
+            height: 1em;
         }
-        body.write-go .brand-chars .c1 { transition-delay: 0.30s; clip-path: inset(0 0 0 0); }
-        body.write-go .brand-chars .c2 { transition-delay: 1.30s; clip-path: inset(0 0 0 0); }
+        .char-stack > span {
+            position: absolute;
+            inset: 0;
+            transition-timing-function: cubic-bezier(0.55, 0.1, 0.3, 1);
+        }
+        /* 方:点 → 横 → 横折钩 → 撇 */
+        .fang .s1 { clip-path: inset(0 40% 100% 40%); }
+        .fang .s2 { clip-path: inset(8% 100% 75% 0); }
+        .fang .s3 { clip-path: inset(15% 0 100% 55%); }
+        .fang .s4 { clip-path: inset(15% 60% 100% 0); }
+        body.write-go .fang .s1 { transition: clip-path 0.20s 0.30s; clip-path: inset(0 40% 88% 40%); }
+        body.write-go .fang .s2 { transition: clip-path 0.42s 0.55s; clip-path: inset(8% 0 75% 0); }
+        body.write-go .fang .s3 { transition: clip-path 0.50s 1.00s; clip-path: inset(15% 0 0 55%); }
+        body.write-go .fang .s4 { transition: clip-path 0.48s 1.55s; clip-path: inset(15% 60% 0 0); }
+        /* 片:撇 → 横 → 中横 → 竖 */
+        .pian .s1 { clip-path: inset(0 70% 100% 0); }
+        .pian .s2 { clip-path: inset(8% 100% 75% 20%); }
+        .pian .s3 { clip-path: inset(45% 100% 42% 20%); }
+        .pian .s4 { clip-path: inset(10% 0 100% 65%); }
+        body.write-go .pian .s1 { transition: clip-path 0.50s 2.10s; clip-path: inset(0 70% 0 0); }
+        body.write-go .pian .s2 { transition: clip-path 0.42s 2.62s; clip-path: inset(8% 0 75% 20%); }
+        body.write-go .pian .s3 { transition: clip-path 0.38s 3.06s; clip-path: inset(45% 5% 42% 20%); }
+        body.write-go .pian .s4 { transition: clip-path 0.48s 3.46s; clip-path: inset(10% 0 0 65%); }
 
         .intro-wordmark {
             text-align: center;
@@ -699,8 +721,18 @@
         <div class="intro-stage">
             <div class="intro-ink" aria-label="方片">
                 <div class="brand-chars">
-                    <span class="c1">方</span>
-                    <span class="c2">片</span>
+                    <span class="char-stack fang">
+                        <span class="s1">方</span>
+                        <span class="s2">方</span>
+                        <span class="s3">方</span>
+                        <span class="s4">方</span>
+                    </span>
+                    <span class="char-stack pian">
+                        <span class="s1">片</span>
+                        <span class="s2">片</span>
+                        <span class="s3">片</span>
+                        <span class="s4">片</span>
+                    </span>
                 </div>
             </div>
             <div class="intro-wordmark">
@@ -1586,20 +1618,18 @@
                 document.body.classList.remove('intro-active');
             }, 600);
         }
-        // 节奏:
-        // 0.30s 方 开始写 (~0.85s 完)
-        // 1.30s 片 开始写 (~0.85s 完)
-        // 2.40s 落款渐入
-        // 3.60s 整层渐隐
-        // 4.20s DOM 清理
+        // 节奏(每笔区域 clip-path 揭幕):
+        // 方:0.30-1.93s(点→横→横折钩→撇)
+        // 片:2.10-3.94s(撇→横→中横→竖)
+        // 4.10s 落款渐入  5.30s 渐隐  5.95s 清理
         requestAnimationFrame(() => document.body.classList.add('write-go'));
-        setTimeout(() => document.querySelector('.intro-wordmark')?.classList.add('show'), 2400);
-        setTimeout(dismissIntro, 3600);
-        // 安全网:6.5 秒后强制清理(字体加载失败时也能退出)
+        setTimeout(() => document.querySelector('.intro-wordmark')?.classList.add('show'), 4100);
+        setTimeout(dismissIntro, 5300);
+        // 安全网:8 秒后强制清理(字体加载失败也能退出)
         setTimeout(() => {
             const el = document.getElementById('introLoader');
             if (el) { el.remove(); document.body.classList.remove('intro-active'); }
-        }, 6500);
+        }, 8000);
 
         // 全局错误捕获：任何未处理错误都会弹出提示
         window.onerror = function(msg, src, line, col, err) {
