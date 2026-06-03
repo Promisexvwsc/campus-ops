@@ -146,6 +146,57 @@
         @media (max-width: 600px) {
             .wipe-stage { width: 92vw; }
         }
+
+        /* ===== 方案 F:对角分幕揭幕(参考 Awwwards / goldnead 案例) ===== */
+        .curtain-stage {
+            display: none;
+            position: relative;
+            width: 520px;
+            aspect-ratio: 1 / 1;
+            overflow: hidden;
+            border-radius: 6px;
+        }
+        .curtain-stage img {
+            display: block;
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            transform: scale(1.06);
+            transition: transform 1.4s cubic-bezier(0.16, 1, 0.3, 1) 0.15s;
+        }
+        /* 两片黑色三角,从对角线 135° 分割 */
+        .curtain-stage .panel {
+            position: absolute;
+            inset: -2px;
+            background: #0a0a0a;
+            transition: transform 1.3s cubic-bezier(0.65, 0, 0.35, 1) 0.1s;
+            pointer-events: none;
+        }
+        .curtain-stage .panel.top {
+            /* 保留左上半三角(对角线以上) */
+            clip-path: polygon(0 0, 100% 0, 0 100%);
+        }
+        .curtain-stage .panel.bot {
+            /* 保留右下半三角(对角线以下) */
+            clip-path: polygon(100% 0, 100% 100%, 0 100%);
+        }
+        body[data-v="curtain"] .chars,
+        body[data-v="curtain"] .hz-pair,
+        body[data-v="curtain"] .wipe-stage,
+        body[data-v="curtain"] .wordmark { display: none; }
+        body[data-v="curtain"] .curtain-stage { display: block; }
+        body[data-v="curtain"].play .curtain-stage .panel.top {
+            transform: translate(-110%, -110%);
+        }
+        body[data-v="curtain"].play .curtain-stage .panel.bot {
+            transform: translate(110%, 110%);
+        }
+        body[data-v="curtain"].play .curtain-stage img {
+            transform: scale(1);
+        }
+        @media (max-width: 600px) {
+            .curtain-stage { width: 92vw; }
+        }
         .chars span {
             display: inline-block;
             transition-property: opacity, transform, filter;
@@ -319,6 +370,7 @@
         <button data-v="glow">C · 墨晕</button>
         <button data-v="hanzi">D · 笔顺(主站)</button>
         <button data-v="wipe">E · 擦窗</button>
+        <button data-v="curtain">F · 帷幕</button>
         <span class="sep"></span>
         <button class="replay" id="replay">重播</button>
     </div>
@@ -366,6 +418,12 @@
             <image href="fangpian-full.webp" width="1280" height="1280"
                    filter="url(#fogFilter)" mask="url(#cleanMask)"/>
         </svg>
+        <!-- 方案 F:对角分幕揭幕 -->
+        <div class="curtain-stage">
+            <img src="fangpian-full.webp" alt="方片">
+            <div class="panel top"></div>
+            <div class="panel bot"></div>
+        </div>
         <div class="wordmark">
             <h1>FANG PIAN</h1>
             <p>方片新媒体 · 校园运营</p>
@@ -384,6 +442,7 @@
             glow:  '<b>方案 C · 墨晕</b> ─ 由虚化高光凝聚成清晰字(blur 22→0, brightness 2.4→1.0),序贯出现',
             hanzi: '<b>方案 D · 笔顺(主站现版)</b> ─ HanziWriter 楷书一笔一划,真笔顺数据驱动',
             wipe:  '<b>方案 E · 擦窗</b> ─ 完整品牌 logo(方片+FANG PIAN+方片新媒体),5 笔左下→右上平行斜擦,无边框',
+            curtain: '<b>方案 F · 帷幕</b> ─ 两片黑色三角沿对角线裂开向两边滑出,后面 logo 同步轻微回缩到位(借鉴 Awwwards/codepen 高频套路)',
         };
         const body = document.body;
         // ===== 方案 D:HanziWriter 笔顺 =====
