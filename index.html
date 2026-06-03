@@ -601,8 +601,9 @@
             align-items: center; gap: 28px;
             z-index: 1;
         }
-        /* ===== 方片 一笔一划(HanziWriter 真笔顺动画) ===== */
+        /* ===== 方片 两段式开屏:HanziWriter 楷书一笔一划 → 渐变成 logo 真图 ===== */
         .intro-ink {
+            position: relative;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -611,12 +612,27 @@
         .hz-pair {
             display: flex;
             gap: 28px;
+            transition: opacity 0.7s ease-in-out;
         }
         .hz-cell {
             width: 220px;
             height: 220px;
         }
         .hz-cell svg { display: block; }
+        /* logo 真图覆盖在 hz-pair 同一位置,初始隐藏 */
+        .brand-image {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            opacity: 0;
+            transform: scale(0.94);
+            transition: opacity 0.7s ease-out, transform 0.9s cubic-bezier(0.16, 1, 0.3, 1);
+            pointer-events: none;
+        }
+        body.show-brand .hz-pair { opacity: 0; }
+        body.show-brand .brand-image { opacity: 1; transform: scale(1); }
 
         .intro-wordmark {
             text-align: center;
@@ -691,6 +707,7 @@
                     <div id="hz-fang" class="hz-cell"></div>
                     <div id="hz-pian" class="hz-cell"></div>
                 </div>
+                <img src="fangpian.webp" alt="方片" class="brand-image">
             </div>
             <div class="intro-wordmark">
                 <h1>FANG PIAN</h1>
@@ -1595,11 +1612,19 @@
                 };
                 const fang = HanziWriter.create('hz-fang', '方', opts);
                 const pian = HanziWriter.create('hz-pian', '片', opts);
+                // 第 1 段:楷书一笔一划
                 await new Promise(r => fang.animateCharacter({ onComplete: r }));
                 await new Promise(r => setTimeout(r, 220));
                 await new Promise(r => pian.animateCharacter({ onComplete: r }));
-                await new Promise(r => setTimeout(r, 320));
+                // 写完后定格 0.5s,让人看完
+                await new Promise(r => setTimeout(r, 500));
+                // 第 2 段:楷书淡出 + 品牌真图淡入(0.7s 交叠)
+                document.body.classList.add('show-brand');
+                // 等图淡入完成 + 多停 0.6s 让人看清品牌字
+                await new Promise(r => setTimeout(r, 1300));
+                // 落款上升
                 document.querySelector('.intro-wordmark')?.classList.add('show');
+                // 落款定格 1s
                 await new Promise(r => setTimeout(r, 1100));
                 dismissIntro();
             } catch (e) {
@@ -1607,11 +1632,11 @@
                 dismissIntro();
             }
         }
-        // 安全网:无论如何 9 秒后强制清理
+        // 安全网:无论如何 10 秒后强制清理(两段式比单段长)
         setTimeout(() => {
             const el = document.getElementById('introLoader');
             if (el) { el.remove(); document.body.classList.remove('intro-active'); }
-        }, 9000);
+        }, 10000);
         if (document.readyState === 'loading') {
             document.addEventListener('DOMContentLoaded', runIntro);
         } else {
