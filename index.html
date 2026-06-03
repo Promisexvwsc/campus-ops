@@ -601,22 +601,35 @@
             align-items: center; gap: 28px;
             z-index: 1;
         }
-        /* ===== 方片 一笔一划(HanziWriter 真笔顺动画) ===== */
+        /* ===== 方片 开屏(Ma Shan Zheng 毛笔字 + 逐字渐显) ===== */
+        @font-face {
+            font-family: "MaShanZheng";
+            src: url("fonts/Ma_Shan_Zheng.ttf") format("truetype");
+            font-display: swap;
+        }
         .intro-ink {
             display: flex;
             align-items: center;
             justify-content: center;
             filter: drop-shadow(0 0 16px rgba(251,191,36,0.35));
         }
-        .hz-pair {
+        .brand-chars {
             display: flex;
-            gap: 28px;
+            gap: 36px;
+            font-family: "MaShanZheng", "STKaiti", "KaiTi", serif;
+            font-size: 220px;
+            font-weight: 700;
+            line-height: 1;
+            color: #fbbf24;
+            user-select: none;
         }
-        .hz-cell {
-            width: 220px;
-            height: 220px;
+        .brand-chars span {
+            display: inline-block;
+            clip-path: inset(0 100% 0 0);
+            transition: clip-path 0.85s cubic-bezier(0.65, 0.05, 0.35, 1);
         }
-        .hz-cell svg { display: block; }
+        body.write-go .brand-chars .c1 { transition-delay: 0.30s; clip-path: inset(0 0 0 0); }
+        body.write-go .brand-chars .c2 { transition-delay: 1.30s; clip-path: inset(0 0 0 0); }
 
         .intro-wordmark {
             text-align: center;
@@ -671,8 +684,7 @@
         }
 
         @media (max-width: 600px) {
-            .hz-cell { width: 140px; height: 140px; }
-            .hz-pair { gap: 18px; }
+            .brand-chars { font-size: 140px; gap: 22px; }
             .intro-wordmark h1 { font-size: 18px; letter-spacing: 7px; }
             .intro-wordmark p { font-size: 10.5px; letter-spacing: 4px; }
             .intro-loader::before { width: 140px; height: 140px; top: 6%; right: 4%; }
@@ -680,16 +692,15 @@
             .intro-skip { bottom: 18px; right: 18px; padding: 6px 12px; font-size: 12px; }
         }
     </style>
-    <script src="hanzi-writer.min.js"></script>
 </head>
 <body class="intro-active">
     <!-- Intro Loader: draws the brand mark then fades into login -->
     <div id="introLoader" class="intro-loader">
         <div class="intro-stage">
             <div class="intro-ink" aria-label="方片">
-                <div class="hz-pair">
-                    <div id="hz-fang" class="hz-cell"></div>
-                    <div id="hz-pian" class="hz-cell"></div>
+                <div class="brand-chars">
+                    <span class="c1">方</span>
+                    <span class="c2">片</span>
                 </div>
             </div>
             <div class="intro-wordmark">
@@ -1565,7 +1576,7 @@
 
     <!-- Supabase SDK -->
     <script>
-        // ============ Intro Loader (HanziWriter 真笔顺动画) ============
+        // ============ Intro Loader (Ma Shan Zheng 毛笔字渐显) ============
         function dismissIntro() {
             const el = document.getElementById('introLoader');
             if (!el) return;
@@ -1575,48 +1586,20 @@
                 document.body.classList.remove('intro-active');
             }, 600);
         }
-        async function runIntro() {
-            try {
-                if (!window.HanziWriter) throw new Error('HanziWriter not loaded');
-                const cellW = window.innerWidth < 600 ? 140 : 220;
-                const charData = { '方': null, '片': null };
-                await Promise.all([
-                    fetch('hz-fang.json').then(r => r.json()).then(d => charData['方'] = d),
-                    fetch('hz-pian.json').then(r => r.json()).then(d => charData['片'] = d),
-                ]);
-                const opts = {
-                    width: cellW, height: cellW, padding: 8,
-                    strokeColor: '#fbbf24',
-                    strokeAnimationSpeed: 1.4,
-                    delayBetweenStrokes: 160,
-                    showOutline: false,
-                    showCharacter: false,
-                    charDataLoader: (c, onLoad) => onLoad(charData[c]),
-                };
-                const fang = HanziWriter.create('hz-fang', '方', opts);
-                const pian = HanziWriter.create('hz-pian', '片', opts);
-                await new Promise(r => fang.animateCharacter({ onComplete: r }));
-                await new Promise(r => setTimeout(r, 220));
-                await new Promise(r => pian.animateCharacter({ onComplete: r }));
-                await new Promise(r => setTimeout(r, 320));
-                document.querySelector('.intro-wordmark')?.classList.add('show');
-                await new Promise(r => setTimeout(r, 1100));
-                dismissIntro();
-            } catch (e) {
-                console.warn('Intro animation failed:', e);
-                dismissIntro();
-            }
-        }
-        // 安全网:无论如何 9 秒后强制清理
+        // 节奏:
+        // 0.30s 方 开始写 (~0.85s 完)
+        // 1.30s 片 开始写 (~0.85s 完)
+        // 2.40s 落款渐入
+        // 3.60s 整层渐隐
+        // 4.20s DOM 清理
+        requestAnimationFrame(() => document.body.classList.add('write-go'));
+        setTimeout(() => document.querySelector('.intro-wordmark')?.classList.add('show'), 2400);
+        setTimeout(dismissIntro, 3600);
+        // 安全网:6.5 秒后强制清理(字体加载失败时也能退出)
         setTimeout(() => {
             const el = document.getElementById('introLoader');
             if (el) { el.remove(); document.body.classList.remove('intro-active'); }
-        }, 9000);
-        if (document.readyState === 'loading') {
-            document.addEventListener('DOMContentLoaded', runIntro);
-        } else {
-            runIntro();
-        }
+        }, 6500);
 
         // 全局错误捕获：任何未处理错误都会弹出提示
         window.onerror = function(msg, src, line, col, err) {
