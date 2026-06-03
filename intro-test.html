@@ -101,6 +101,44 @@
         /* 切到方案 D 时:CSS 字隐藏,HanziWriter 画板显示 */
         body[data-v="hanzi"] .chars { display: none; }
         body[data-v="hanzi"] .hz-pair { display: flex; }
+
+        /* ===== 方案 E 容器:擦玻璃揭幕 ===== */
+        .wipe-stage {
+            display: none;
+            position: relative;
+            width: 600px;
+            height: 330px;
+            filter: drop-shadow(0 0 16px rgba(251,191,36,0.35));
+        }
+        .wipe-stage img {
+            display: block;
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+        }
+        .wipe-fog {
+            position: absolute;
+            inset: 0;
+            background: rgba(210,220,240,0.18);
+            backdrop-filter: blur(22px) brightness(0.55) saturate(0.4);
+            -webkit-backdrop-filter: blur(22px) brightness(0.55) saturate(0.4);
+            /* 初始:斜向覆盖整图 + 余量 */
+            clip-path: polygon(-40% 0, 130% 0, 130% 100%, -20% 100%);
+            transition: clip-path 2.4s cubic-bezier(0.65, 0, 0.35, 1);
+        }
+        /* 切到方案 E:隐藏其他字层,显示擦窗舞台 */
+        body[data-v="wipe"] .chars,
+        body[data-v="wipe"] .hz-pair { display: none; }
+        body[data-v="wipe"] .wipe-stage { display: block; }
+        /* 触发:雾被向右抹掉,带轻微对角倾斜 */
+        body[data-v="wipe"].play .wipe-fog {
+            clip-path: polygon(130% 0, 200% 0, 200% 100%, 150% 100%);
+            transition-delay: 0.3s;
+        }
+
+        @media (max-width: 600px) {
+            .wipe-stage { width: 92vw; height: calc(92vw * 0.55); }
+        }
         .chars span {
             display: inline-block;
             transition-property: opacity, transform, filter;
@@ -178,6 +216,7 @@
         body[data-v="slide"].play .wordmark { transition-delay: 1.8s; }
         body[data-v="glow"].play .wordmark { transition-delay: 2.4s; }
         body[data-v="hanzi"].play .wordmark { transition-delay: 0s; }  /* JS 控制时机 */
+        body[data-v="wipe"].play .wordmark { transition-delay: 2.6s; }
         .wordmark h1 {
             font-family: "Inter", "Helvetica Neue", Arial, sans-serif;
             font-size: 22px;
@@ -272,6 +311,7 @@
         <button data-v="slide">B · 合拢</button>
         <button data-v="glow">C · 墨晕</button>
         <button data-v="hanzi">D · 笔顺(主站)</button>
+        <button data-v="wipe">E · 擦窗</button>
         <span class="sep"></span>
         <button class="replay" id="replay">重播</button>
     </div>
@@ -284,6 +324,10 @@
         <div class="hz-pair">
             <div id="hz-fang" class="hz-cell"></div>
             <div id="hz-pian" class="hz-cell"></div>
+        </div>
+        <div class="wipe-stage">
+            <img src="fangpian.webp" alt="方片">
+            <div class="wipe-fog"></div>
         </div>
         <div class="wordmark">
             <h1>FANG PIAN</h1>
@@ -302,6 +346,7 @@
             slide: '<b>方案 B · 合拢</b> ─ 方从左、片从右滑入,在中央合并,缓出曲线',
             glow:  '<b>方案 C · 墨晕</b> ─ 由虚化高光凝聚成清晰字(blur 22→0, brightness 2.4→1.0),序贯出现',
             hanzi: '<b>方案 D · 笔顺(主站现版)</b> ─ HanziWriter 楷书一笔一划,真笔顺数据驱动',
+            wipe:  '<b>方案 E · 擦窗</b> ─ logo 原图被磨砂雾覆盖,clip-path 斜向抹掉雾层,品牌字渐渐显出',
         };
         const body = document.body;
         // ===== 方案 D:HanziWriter 笔顺 =====
