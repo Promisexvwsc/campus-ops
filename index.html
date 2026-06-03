@@ -631,22 +631,72 @@
             align-items: center; gap: 28px;
             z-index: 1;
         }
-        /* ===== 方片 一笔一划(HanziWriter 真笔顺动画) ===== */
-        .intro-ink {
+        /* ===== 方片开屏:① 视频 → ② 合拢字 ===== */
+        @font-face {
+            font-family: "MaShanZheng";
+            src: url("fonts/Ma_Shan_Zheng.ttf") format("truetype");
+            font-display: swap;
+        }
+        /* 第一段:全屏视频 */
+        .intro-video {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            z-index: 1;
+            background: #000;
+            opacity: 1;
+            transition: opacity 0.5s ease-out;
+        }
+        body.intro-chars-play .intro-video { opacity: 0; pointer-events: none; }
+        /* 第二段:合拢字层(默认隐藏) */
+        .intro-stage {
+            position: relative;
+            z-index: 2;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.4s ease-out;
+        }
+        body.intro-chars-play .intro-stage { opacity: 1; }
+        /* 方片俩字:粗黑描边 + 硬投影 + 金色辉光 */
+        .chars {
             display: flex;
-            align-items: center;
-            justify-content: center;
-            filter: drop-shadow(0 0 16px rgba(251,191,36,0.35));
+            gap: clamp(16px, 3.5vw, 36px);
+            font-family: "MaShanZheng", "STKaiti", "KaiTi", serif;
+            font-size: clamp(110px, 24vw, 220px);
+            font-weight: 700;
+            line-height: 1;
+            color: #fbbf24;
+            user-select: none;
+            -webkit-text-stroke: clamp(4px, 0.8vw, 10px) #000;
+            paint-order: stroke fill;
+            filter:
+                drop-shadow(0 0 clamp(8px, 1.4vw, 16px) rgba(251,191,36,0.35))
+                drop-shadow(clamp(3px, 0.6vw, 7px) clamp(3px, 0.6vw, 7px) 0 #000);
         }
-        .hz-pair {
-            display: flex;
-            gap: 28px;
+        .chars span {
+            display: inline-block;
+            transition-property: opacity, transform;
+            transition-duration: 1.0s;
+            transition-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
+            will-change: opacity, transform;
         }
-        .hz-cell {
-            width: 220px;
-            height: 220px;
+        /* 初始:方在左外、片在右外 */
+        .chars .c1 {
+            opacity: 0;
+            transform: translateX(clamp(-300px, -38vw, -160px)) scale(0.85);
         }
-        .hz-cell svg { display: block; }
+        .chars .c2 {
+            opacity: 0;
+            transform: translateX(clamp(160px, 38vw, 300px)) scale(0.85);
+        }
+        /* 触发:视频结束 → 两字同步合拢 */
+        body.intro-chars-play .chars span {
+            opacity: 1;
+            transform: translateX(0) scale(1);
+            transition-delay: 0.3s;
+        }
 
         .intro-wordmark {
             text-align: center;
@@ -660,19 +710,19 @@
         }
         .intro-wordmark h1 {
             font-family: "Inter", "Helvetica Neue", Arial, sans-serif;
-            font-size: 22px;
+            font-size: clamp(14px, 3vw, 28px);
             font-weight: 700;
             color: #fbbf24;
-            letter-spacing: 10px;
-            padding-left: 10px;
+            letter-spacing: clamp(4px, 1.2vw, 12px);
+            padding-left: clamp(4px, 1.2vw, 12px);
             line-height: 1;
-            margin: 0 0 12px 0;
+            margin: 0 0 clamp(8px, 1.2vw, 14px) 0;
         }
         .intro-wordmark p {
-            font-size: 12px;
-            color: rgba(251,191,36,0.6);
-            letter-spacing: 6px;
-            padding-left: 6px;
+            font-size: clamp(10px, 1.8vw, 16px);
+            color: rgba(251,191,36,0.7);
+            letter-spacing: clamp(3px, 0.7vw, 7px);
+            padding-left: clamp(3px, 0.7vw, 7px);
             font-weight: 500;
             margin: 0;
         }
@@ -680,6 +730,7 @@
         .intro-skip {
             position: absolute;
             bottom: 28px; right: 28px;
+            z-index: 10;  /* 高于视频,视频期间也能点 */
             padding: 7px 16px;
             background: transparent;
             border: 1.5px solid rgba(251,191,36,0.5);
@@ -701,26 +752,22 @@
         }
 
         @media (max-width: 600px) {
-            .hz-cell { width: 140px; height: 140px; }
-            .hz-pair { gap: 18px; }
-            .intro-wordmark h1 { font-size: 18px; letter-spacing: 7px; }
-            .intro-wordmark p { font-size: 10.5px; letter-spacing: 4px; }
             .intro-loader::before { width: 140px; height: 140px; top: 6%; right: 4%; }
             .intro-loader::after  { width: 100px; height: 100px; bottom: 8%; left: 6%; }
             .intro-skip { bottom: 18px; right: 18px; padding: 6px 12px; font-size: 12px; }
         }
     </style>
-    <script src="hanzi-writer.min.js"></script>
 </head>
 <body class="intro-active">
-    <!-- Intro Loader: draws the brand mark then fades into login -->
+    <!-- Intro Loader: ① 视频 → ② 合拢字 → fade 进登录页 -->
     <div id="introLoader" class="intro-loader">
+        <video id="introVideo" class="intro-video"
+               muted playsinline preload="auto" autoplay
+               src="https://arp-storage.fengbao.com/users/88156086-404c-4e85-8cce-d9c7d9b00910/uploads/20260603095352_866ea38f.mp4"></video>
         <div class="intro-stage">
-            <div class="intro-ink" aria-label="方片">
-                <div class="hz-pair">
-                    <div id="hz-fang" class="hz-cell"></div>
-                    <div id="hz-pian" class="hz-cell"></div>
-                </div>
+            <div class="chars" aria-label="方片">
+                <span class="c1">方</span>
+                <span class="c2">片</span>
             </div>
             <div class="intro-wordmark">
                 <h1>FANG PIAN</h1>
@@ -1595,7 +1642,7 @@
 
     <!-- Supabase SDK -->
     <script>
-        // ============ Intro Loader (HanziWriter 真笔顺动画) ============
+        // ============ Intro Loader (① 视频 → ② 合拢字 → ③ 渐隐) ============
         function dismissIntro() {
             const el = document.getElementById('introLoader');
             if (!el) return;
@@ -1603,50 +1650,47 @@
             setTimeout(() => {
                 el.remove();
                 document.body.classList.remove('intro-active');
+                document.body.classList.remove('intro-chars-play');
             }, 600);
         }
-        async function runIntro() {
-            try {
-                if (!window.HanziWriter) throw new Error('HanziWriter not loaded');
-                const cellW = window.innerWidth < 600 ? 140 : 220;
-                const charData = { '方': null, '片': null };
-                await Promise.all([
-                    fetch('hz-fang.json').then(r => r.json()).then(d => charData['方'] = d),
-                    fetch('hz-pian.json').then(r => r.json()).then(d => charData['片'] = d),
-                ]);
-                const opts = {
-                    width: cellW, height: cellW, padding: 8,
-                    strokeColor: '#fbbf24',
-                    strokeAnimationSpeed: 2.0,    // 1.4 慢 / 2.6 快 / 2.0 折中
-                    delayBetweenStrokes: 110,
-                    showOutline: false,
-                    showCharacter: false,
-                    charDataLoader: (c, onLoad) => onLoad(charData[c]),
-                };
-                const fang = HanziWriter.create('hz-fang', '方', opts);
-                const pian = HanziWriter.create('hz-pian', '片', opts);
-                await new Promise(r => fang.animateCharacter({ onComplete: r }));
-                await new Promise(r => setTimeout(r, 160));   // 字间停顿
-                await new Promise(r => pian.animateCharacter({ onComplete: r }));
-                await new Promise(r => setTimeout(r, 250));   // 写完到落款
+        let charsStarted = false;
+        function startCharsStage() {
+            if (charsStarted) return;
+            charsStarted = true;
+            const vid = document.getElementById('introVideo');
+            if (vid) { try { vid.pause(); } catch(_) {} }
+            // 切到第二段:合拢字 + 落款
+            document.body.classList.add('intro-chars-play');
+            // 0.3s 后字开始滑入 + 1.0s 滑完 = 1.3s 到位 → 0.5s 后落款
+            setTimeout(() => {
                 document.querySelector('.intro-wordmark')?.classList.add('show');
-                await new Promise(r => setTimeout(r, 850));   // 落款定格
-                dismissIntro();
-            } catch (e) {
-                console.warn('Intro animation failed:', e);
-                dismissIntro();
-            }
+            }, 1800);
+            // 落款定格 ~1s 后 dismiss
+            setTimeout(dismissIntro, 3300);
         }
-        // 安全网:无论如何 9 秒后强制清理
+        const introVid = document.getElementById('introVideo');
+        if (introVid) {
+            introVid.addEventListener('ended', startCharsStage);
+            introVid.addEventListener('error', startCharsStage);
+            // 部分浏览器/网络下 autoplay 可能被拦,主动尝试 play,失败就跳过视频
+            const playPromise = introVid.play();
+            if (playPromise && typeof playPromise.catch === 'function') {
+                playPromise.catch(() => startCharsStage());
+            }
+            // 防慢网:5 秒还没开始播 → 跳过视频直接合拢
+            const videoStartGuard = setTimeout(() => {
+                if (!charsStarted && introVid.paused) startCharsStage();
+            }, 5000);
+            introVid.addEventListener('playing', () => clearTimeout(videoStartGuard));
+        } else {
+            // 视频元素不存在(防御),直接进合拢
+            startCharsStage();
+        }
+        // 安全网:视频最长 12s + 合拢 4s + buffer = 18s 强制清理
         setTimeout(() => {
             const el = document.getElementById('introLoader');
             if (el) { el.remove(); document.body.classList.remove('intro-active'); }
-        }, 9000);
-        if (document.readyState === 'loading') {
-            document.addEventListener('DOMContentLoaded', runIntro);
-        } else {
-            runIntro();
-        }
+        }, 18000);
 
         // 全局错误捕获：任何未处理错误都会弹出提示
         window.onerror = function(msg, src, line, col, err) {
