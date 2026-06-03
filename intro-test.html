@@ -20,6 +20,12 @@
             min-height: 100vh;
             overflow: hidden;
             position: relative;
+            transition: background 0.3s ease;
+        }
+        /* E/F 直接用 logo 原图,body 切到纯黑跟 logo 底色无缝 */
+        body[data-v="wipe"],
+        body[data-v="curtain"] {
+            background: #000000;
         }
 
         /* ===== 四角发光菱形 ===== */
@@ -154,7 +160,6 @@
             width: 520px;
             aspect-ratio: 1 / 1;
             overflow: hidden;
-            border-radius: 6px;
         }
         .curtain-stage img {
             display: block;
